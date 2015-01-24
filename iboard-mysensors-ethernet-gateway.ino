@@ -102,7 +102,7 @@ void writeUDP(char *data) {
   Serial.println(data);
 
   server.beginPacket(CONTROLLER_IP, SERVER_PORT);
-  server.write(data, strlen(data));
+  server.write((const uint8_t*)data, strlen(data));
   server.endPacket();
 }
 
