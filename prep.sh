@@ -5,6 +5,7 @@
 # create lib/ directory if not present
 if [ ! -d "lib" ]; then
     mkdir "lib" && echo "Creating lib/ directory"
+    echo
 fi
 
 # -------------------------------------------------------------------
@@ -14,6 +15,9 @@ MY_SENSORS_GIT_LOCATION="MySensors-thozza-git/libraries/MySensors"
 MY_SENSORS_LIB_LOCATION="lib/MySensors"
 MY_CONFIG_NAME="MyConfig.h"
 
+RF24_CONFIG_LOCATION="$MY_SENSORS_LIB_LOCATION/utility"
+RF24_CONFIG_NAME="RF24_config.h"
+
 # clean the MySensors from lib/
 rm -rf $MY_SENSORS_LIB_LOCATION && echo "Removing $MY_SENSORS_LIB_LOCATION"
 cp -r $MY_SENSORS_GIT_LOCATION $MY_SENSORS_LIB_LOCATION && echo "Copying $MY_SENSORS_GIT_LOCATION to $MY_SENSORS_LIB_LOCATION"
@@ -21,12 +25,24 @@ cp -r $MY_SENSORS_GIT_LOCATION $MY_SENSORS_LIB_LOCATION && echo "Copying $MY_SEN
 # delete unused stuff
 rm -rf "$MY_SENSORS_LIB_LOCATION/examples"
 
+echo
+
+# Copy the configuration
 if [ -f "src/$MY_CONFIG_NAME" ]; then
     echo "Using project specific $MY_CONFIG_NAME from src/"
     cp "src/$MY_CONFIG_NAME" $MY_SENSORS_LIB_LOCATION && echo "Copying $MY_CONFIG_NAME"
 else
     echo "No project specific configuration $MY_CONFIG_NAME found, using the default one"
 fi
+
+if [ -f "src/$RF24_CONFIG_NAME" ]; then
+    echo "Using project specific $RF24_CONFIG_NAME from src/"
+    cp "src/$RF24_CONFIG_NAME" $RF24_CONFIG_LOCATION && echo "Copying $RF24_CONFIG_NAME"
+else
+    echo "No project specific configuration $RF24_CONFIG_NAME found, using the default one"
+fi
+
+echo
 
 # -------------------------------------------------------------------
 # DigitalIO preparations
