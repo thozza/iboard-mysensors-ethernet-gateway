@@ -29,7 +29,7 @@
 #include <Ethernet.h>
 #include <EthernetUdp.h>
 
-#define SERVER_PORT 42424
+#define SERVER_PORT 5003
 #define IP_RENEWAL_INTERVAL 60000  // in milliseconds
 
 /***********************************/
