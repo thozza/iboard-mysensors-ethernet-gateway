@@ -27,3 +27,10 @@
 *.i*86
 *.x86_64
 *.hex
+
+# platform IO stuff
+.pioenvs
+.sconsign.dblite
+
+# temporary MySensors library
+lib/MySensors

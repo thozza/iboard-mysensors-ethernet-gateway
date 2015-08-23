@@ -1,0 +1,9 @@
+[submodule "MySensors-upstream-git"]
+	path = MySensors-upstream-git
+	url = https://github.com/mysensors/Arduino.git
+[submodule "MySensors-thozza-git"]
+	path = MySensors-thozza-git
+	url = https://github.com/thozza/MySensors-Arduino.git
+[submodule "DigitalIO-upstream-git"]
+	path = DigitalIO-upstream-git
+	url = https://github.com/greiman/DigitalIO.git
