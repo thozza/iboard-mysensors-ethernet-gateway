@@ -42,16 +42,15 @@
 /********* FUNCTIONS *********/
 /*****************************/
 byte *get_random_mac();
-bool renewIP();
-void writeUDP(char *data);
+void renewIP();
+void writeEthernet(char *writeEthernet);
 
 /************************************/
 /********* GLOBAL VARIABLES *********/
 /************************************/
 MyGateway gateway(RF24_CE_pin, RF24_CS_pin);
 EthernetUDP server;
-static char recvBuffer[UDP_TX_PACKET_MAX_SIZE];
-IPAddress CONTROLLER_IP(192, 168, 122, 1);
+static char recvBuffer[MAX_RECEIVE_LENGTH];
 
 /**********************************/
 /********* IMPLEMENTATION *********/
@@ -74,7 +73,7 @@ void setup() {
   /* configure the UDP server */
   server.begin(SERVER_PORT);
   
-  gateway.begin(RF24_PA_LEVEL_GW, RF24_CHANNEL, RF24_DATARATE, writeUDP);
+  gateway.begin(RF24_PA_LEVEL_GW, RF24_CHANNEL, RF24_DATARATE, writeEthernet);
 }
 
 /**
@@ -82,12 +81,11 @@ void setup() {
  */
 void loop() {
   /* renew the IP address */
-  if (renewIP() == false)
-    return;
+  renewIP();
 
   int packet_size = server.parsePacket();
   if (server.available()) {
-   server.read(recvBuffer, UDP_TX_PACKET_MAX_SIZE);
+   server.read(recvBuffer, MAX_RECEIVE_LENGTH);
    gateway.parseAndSend(recvBuffer);
   }
 
@@ -97,19 +95,33 @@ void loop() {
 /**
  * Send data to the remote controller via UDP
  */
-void writeUDP(char *data) {
-  Serial.print("Data for controller: ");
-  Serial.println(data);
+void writeEthernet(char *writeBuffer) {
+#ifndef GATEWAY_CONTROLLER_DISCOVERY
+  server.write(writeBuffer);
+#else
+  char buffer[16];
+  snprintf_P(buffer, 16, PSTR("0;0;%d;0;%d;"), C_INTERNAL, I_CONTROLLER_DISCOVERY);
 
-  server.beginPacket(CONTROLLER_IP, SERVER_PORT);
-  server.write((const uint8_t*)data, strlen(data));
+  if (strstr(writeBuffer, buffer) != NULL) {
+    /* Controller Discovery msg -> broadcast it! */
+    server.beginPacket(getBroadcastIP(Ethernet.localIP(), Ethernet.subnetMask()), gateway.getControllerPort());
+  }
+  else if (gateway.getControllerIP() == INADDR_NONE) {
+    Serial.println(PSTR("Invalid controller IP - NOT Sending ethernet msg"));
+    return;
+  }
+  else {
+    server.beginPacket(gateway.getControllerIP(), gateway.getControllerPort());
+  }
+  server.write(writeBuffer, strlen(writeBuffer));
   server.endPacket();
+#endif /* GATEWAY_CONTROLLER_DISCOVERY */
 }
 
 /**
  * Renew the IP address
  */
-bool renewIP() {
+void renewIP() {
   /* renew/rebind IP address
   0 - nothing happened
   1 - renew failed
@@ -117,22 +129,22 @@ bool renewIP() {
   3 - rebinf failed
   4 - rebind success
   */
-  static unsigned long last_time = millis();
+  static unsigned long next_time = millis() + IP_RENEWAL_INTERVAL;
   unsigned long now = millis();
-  
-  // TODO: may fail on overflow
-  if (last_time + IP_RENEWAL_INTERVAL > now)
-    return true;
+
+  // http://playground.arduino.cc/Code/TimingRollover
+  if ((long)(now - next_time) < 0)
+    return;
 
   if (Ethernet.maintain() & ~(0x06)) {
     Serial.println("Failed to renew/rebind IP address using DHCP");
-    return false;
+    return;
   }
 
-  last_time = now;
+  next_time = now + IP_RENEWAL_INTERVAL;
   Serial.print("My IP address: ");
   Serial.println(Ethernet.localIP());
-  return true;
+  return;
 }
 
 /**
