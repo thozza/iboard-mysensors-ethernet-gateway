@@ -31,6 +31,7 @@
 # platform IO stuff
 .pioenvs
 .sconsign.dblite
+.piolibdeps
 
-# temporary MySensors library
-lib/MySensors
+# VS Code
+.vscode
